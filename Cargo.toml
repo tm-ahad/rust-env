@@ -3,6 +3,8 @@ name = "rust-env"
 version = "0.1.0"
 edition = "2021"
 authors=["TM"]
+license="MIT"
+description="A package to make managing env in rust a lot easier with A good developrt experience."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
