@@ -1,13 +1,79 @@
 //!# rust-env
 //!
 //! rust-env is a package to make managing env
-//! a lot easier in rust
+//! a lot easier in
+//! # Updates
+//!
+//! v0.2.0
+//! Added `match_str` and `match_vec` functions
+//! devide 443 lines of code to many files
+//! Removed 3 bugs
+//! # Learn more
+//! Learn more by reading docs of rust-env
+//! # Incoming updates
+//!
+//! Fixing bugs (If there are any of them)
+//! # Incoming Breaking Updates
+//!
+//! this package will be a package to work with A markup language
+//! named RML (Rust MarkUp Language)
+//!
+//! The syntax will be like this
+//! # Example
+//! users $
+//!     TM $ $
+//!         name TM
+//!         email tm.example.ahad@example.com
+//!         friends 4 i32
+//!         friend_names @
+//!             Araf
+//!             Rahin
+//!             Alif
+//!             Nayem
+//!         @
+//!     $
+//! $
 
 use std::env::vars;
 use std::fs::{read_to_string, write};
 
+#[derive(Debug, Clone)]
+/// This enum mainly rap two type of data
+/// String and `Vec<String>`
+/// See docs of `struct Env` of this package for learn more
+pub enum Wrapper {
+    Str(String),
+    Vec(Vec<String>),
+    Empty
+}
+
+/// This enum is mainly A key-value pair
+/// `String` and `Vec<String>`
+/// See docs of `struct Env` of this package for learn more
+/// Here's The enum looks like
+/// # Example
+/// ```
+/// pub enum Hash {
+///     Str(String, String),
+///     Vec(String, Vec<String>),
+///     Placeholder
+/// }
+///```
+#[derive(Clone, Debug, PartialEq)]
+pub enum Hash {
+    Str(String, String),
+    Vec(String, Vec<String>),
+    Placeholder
+}
+
 #[allow(dead_code)]
 struct SPair(String, String);
+
+pub struct Env {
+    pub data: Vec<Hash>,
+    pub global: Vec<Hash>,
+    pub path: String
+}
 
 /// Using this trait you can extend the behavior
 /// of Env struct
@@ -30,6 +96,7 @@ pub trait EnvFrame {
     fn marshal(val: Vec<Hash>) -> String;
     fn parse(content: String) -> Vec<Hash>;
     fn new(name: String) -> Env;
+    fn raw(&mut self, e: &str);
     fn get(&self, k: &str) -> Wrapper;
     fn get_debug(self) -> Vec<Hash>;
     fn set(&mut self, k: &str, v: Hash);
@@ -58,7 +125,7 @@ pub fn Vct(a: &str, v: Vec<&str>) -> Hash {
     Hash::Vec(a.to_string(), v_)
 }
 
-fn get_d(d: Vec<Hash>, key: String) -> Wrapper {
+pub fn get_d(d: Vec<Hash>, key: String) -> Wrapper {
     for h in d.into_iter() {
 
         match h {
@@ -77,40 +144,94 @@ fn get_d(d: Vec<Hash>, key: String) -> Wrapper {
     return Wrapper::Empty;
 }
 
-#[derive(Debug, Clone)]
-/// This enum mainly rap two type of data
-/// String and `Vec<String>`
-/// See docs of `struct Env` of this package for learn more
-pub enum Wrapper {
-    Str(String),
-    Vec(Vec<String>),
-    Empty
-}
-
-/// This enum is mainly A key-value pair
-/// `String` and `Vec<String>`
-/// See docs of `struct Env` of this package for learn more
-/// Here's The enum looks like
+/// On version 0.2.0 of rust-env DX improved
+/// You don't need to match a `Wrapper` variant
+/// Instead use `match_str` and `match vec`
+/// Here's a example
 /// # Example
 /// ```
-/// pub enum Hash {
-///     Str(String, String),
-///     Vec(String, Vec<String>),
-///     Placeholder
-/// }
-///```
+/// use rust_env::{Env, match_str, match_vec, Wrapper};
+///
+/// let env = Env::new("./config.env");
+///
+/// //On version 0.1.0
+/// let addr = match env.get_local("ADDR") {
+///     Wrapper::Str(e) => e,
+///     Wrapper::Vec(v) => panic!("Can't use vec instead of string"),
+///     _ => String::new()
+/// };
+/// let ip = match env.get_local("ip") {
+///     Wrapper::Vec(e) => e,
+///     Wrapper::Str(v) => panic!("Can't use string instead of vec"),
+///     _ => String::new()
+/// };
+///
+/// //Now (v0.2.0)
+///
+/// let addr: String = match_str(env.get_local("ADDR"));
+/// let ip: Vec<String> = match_vec(env.get_local("IP"));
+/// ```
 
-#[derive(Debug, Clone)]
-pub enum Hash {
-    Str(String, String),
-    Vec(String, Vec<String>),
-    Placeholder
+#[allow(dead_code)]
+pub fn match_str(w: Wrapper) -> String {
+    return match w {
+        Wrapper::Str(s) => s,
+        Wrapper::Vec(_) => {
+            panic!("Can't extract string from Wrapper::Vec");
+        }
+        _ => String::new()
+    }
 }
 
-pub struct Env {
-    data: Vec<Hash>,
-    global: Vec<Hash>,
-    path: String
+/// On version 0.2.0 of rust-env DX improved
+/// You don't need to match a `Wrapper` variant
+/// Instead use `match_str` and `match vec`
+/// Here's a example
+/// # Example
+/// ```
+/// use rust_env::{Env, match_str, match_vec, Wrapper};
+///
+/// let env = Env::new("./config.env");
+///
+/// //On version 0.1.0
+/// let addr = match env.get_local("ADDR") {
+///     Wrapper::Str(e) => e,
+///     Wrapper::Vec(v) => panic!("Can't use vec instead of string"),
+///     _ => String::new()
+/// };
+/// let ip = match env.get_local("ip") {
+///     Wrapper::Vec(e) => e,
+///     Wrapper::Str(v) => panic!("Can't use string instead of vec"),
+///     _ => String::new()
+/// };
+///
+/// //Now (v0.2.0)
+///
+/// let addr: String = match_str(env.get_local("ADDR"));
+/// let ip: Vec<String> = match_vec(env.get_local("IP"));
+/// ```
+#[allow(dead_code)]
+pub fn match_vec(w: Wrapper) -> Vec<String> {
+    return match w {
+        Wrapper::Vec(s) => s,
+        Wrapper::Str(_) => {
+            panic!("Can't extract string from Wrapper::Str")
+        }
+        _ => Vec::new()
+    }
+}
+
+fn has(b: Vec<Hash>, h: Hash) -> bool {
+    let mut res = false;
+
+    for vals in b.into_iter() {
+        if vals == h {
+            res = true;
+            break;
+        }
+    }
+
+    res
 }
 
 impl Env {
@@ -130,6 +251,10 @@ impl Env {
 
         for _lines in lines.iter() {
             let pair_ = _lines.split("=").collect::<Vec<&str>>();
+
+            if pair_.len() == 0 || pair_[0] == "" {
+                continue;
+            }
             let raw_value = pair_[1];
 
             #[allow(unused_assignments)]
@@ -245,11 +370,22 @@ impl Env {
     /// ```
     pub fn set(&mut self, h: Hash) {
 
-        self.data.push(h.clone());
+        if !has(self.data.clone(), h.clone()) {
+            self.data.push(h.clone());
+        }
         let hash = Env::marshal(vec![h]);
 
         write(&self.path, hash).expect(
             "Invalid path to write")
+    }
+
+    pub fn exec(mut self, e: &str) {
+        Env::raw(&mut self, e);
+        let string = read_to_string(&self.path).unwrap();
+
+        write(&self.path,
+              format!("{}\n{}", string, e))
+            .expect("Invalid path to write");
     }
 
     /// It's similar to the `set` function
@@ -266,10 +402,15 @@ impl Env {
     /// //Using raw function
     /// env.raw("PORT=6778");
 
+    #[allow(dead_code)]
     pub fn raw(&mut self, e: &str) {
-        let mut h = Env::parse(e);
-        self.data.append(&mut h);
+        let h = Env::parse(e);
 
+        for hash in h.into_iter() {
+            if !has(self.data.clone(), hash.clone()) {
+                self.data.push(hash.clone())
+            }
+        }
     }
 
 
